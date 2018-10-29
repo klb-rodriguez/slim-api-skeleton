@@ -1,0 +1,18 @@
+version: '2'
+
+volumes:
+    logs:
+        driver: local
+
+services:
+    slim:
+        image: php:7.2-dtic
+        working_dir: /var/www
+        command: php -S 0.0.0.0:80 -t public
+        environment:
+            docker: "true"
+        ports:
+            - 90:80
+        volumes:
+            - .:/var/www
+            - logs:/var/www/logs

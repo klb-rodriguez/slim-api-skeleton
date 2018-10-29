@@ -1,0 +1,13 @@
+/vendor/
+/logs/*
+!/logs/README.md
+# Archivos de parametros
+.env
+# Binario composer
+composer.phar
+# Archivos compresos
+*.tar.gz
+# Archivos de respaldo
+*~
+# Archivos de solución de conflictos
+*.orig
