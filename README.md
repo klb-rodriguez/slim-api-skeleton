@@ -154,7 +154,7 @@ Habilitar las conexiones remotas para el rango de IP de docker, editando el arch
 
 ### Tabla ejemplo de la base
 
-En la base de datos crear una tabla con el nombre de **libro** y cuya estructura sea similar a la siguiente: 
+En la base de datos crear una tabla con el nombre de **libro** y cuya estructura sea similar a la siguiente:
 
 ```
                             Tabla «libro»
@@ -179,7 +179,7 @@ Dentro del proyecto se encuentra un archivo **CSV** llamado **`libros.csv`** el 
 
 ### Configuración de los puertos de Docker
 
-Por defecto se ha configurado para que docker utilice la imagen de **php:7.2-dtic** proporcionada por el MINSAL y el **puerto 90**, si se ha de utilizar otra imagen y/o el puerto está en uso por otra aplicación será necesario cambiarlo, para lo cuál editar el archivo **`docker-compose.yml`** que se encuentra dentro del directorio raíz del proyecto 
+Por defecto se ha configurado para que docker utilice la imagen de **php:7.2-dtic** proporcionada por el MINSAL y el **puerto 90**, si se ha de utilizar otra imagen y/o el puerto está en uso por otra aplicación será necesario cambiarlo, para lo cuál editar el archivo **`docker-compose.yml`** que se encuentra dentro del directorio raíz del proyecto
 
 ```bash
 services:
@@ -218,6 +218,8 @@ Una vez ya configurado y ejecutandose la app, lo siguiente es crear los **endpoi
 
 ### GET
 
+Endpoint que permite listar todos los libros según los parámetros de búsqueda proporcionados.
+
 versión: **v1**
 
 uri: **/libros**
@@ -228,9 +230,91 @@ dato de respuesta: **JSON**
 
 Editar el archivo **routes.php** que se encuentra dentro del directorio `src/routes` y agregar el código que se lista a continuación:
 
+```php
+<?php
+
+// Codigo...
+
+// Endpoint GET que permite listar todos los libros segun los parametros de busqueda
+// proporcionados
+$app->get('/v1/libros', function (Request $request, Response $response, array $args) {
+    // Inicialización de variables
+    $datos = array();
+    $conn  = $this->db->getConnection();
+    $where = array();
+
+    // Obteniendo parámetros de búsqueda
+    $isbn             = $request->getParam('isbn');
+    $descripcion      = $request->getParam('descripcion');
+    $autor            = $request->getParam('autor');
+    $fechaPublicacion = $request->getParam('fechaPublicacion');
+
+    // verificando que al menos un parametro de busqueda sea proporcionado
+    if( $isbn || $descripcion || $autor || $fechaPublicacion ) {
+        if( $isbn )
+            $where[] = "isbn = '".$isbn."'";
+
+        if( $descripcion )
+            $where[] = "descripcion = '".$descripcion."'";
+
+        if( $autor )
+            $where[] = "autor = '".$autor."'";
+
+        if( $fechaPublicacion )
+            $where[] = "fecha_publicacion = '".$fechaPublicacion."'";
+
+        $where = count( $where ) > 0 ? "WHERE ".implode(" AND ", $where) : "";
+
+        $sql = "SELECT * FROM libro $where";
+
+        try {
+            $stm = $conn->prepare($sql);
+            $stm->execute();
+            $datos = $stm->fetchAll(PDO::FETCH_ASSOC);
+        } catch(Exception $ex) {
+            return $response->withJson( array("Error al procesar la petición"), 500 );
+        }
+    }
+
+    return $response->withJson( $datos, 200 );
+});
+```
+
+
+
+**Ejemplo de consumo**
+
+http://localhost:90/v1/libros?isbn=9780530239033
+
+**Resultado:**
+
+```
+[
+	{
+		"id": 1,
+		"isbn": "9780530239033",
+		"descripcion": "Iste modi accusantium autem suscipit quia et et dolorum.",
+		"autor": "Roslyn Morissette",
+		"fecha_publicacion": "2002-09-08 00:00:00"
+	}
+]
+```
+
 
 
 ### GET/{id}
+
+Endpoint que permite obtener un libro, para este método es requerido proporcionar el id o llave del libro que se desea obtener.
+
+versión: **v1**
+
+uri: **/libros**
+
+dato de respuesta: **JSON**
+
+
+
+Editar el archivo **routes.php** que se encuentra dentro del directorio `src/routes` y agregar el código que se lista a continuación:
 
 ### POST
 
