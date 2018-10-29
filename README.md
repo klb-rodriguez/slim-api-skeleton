@@ -8,10 +8,18 @@ Plantilla WebServices -REST que utiliza el [Framework Slim de PHP](https://www.s
 
 ## Tabla de Contenido
 
-* [Requerimientos](#requerimientos)
+* [Requisitos](#requisitos)
   * [Imagen de Doker](#imagen-de-docker)
+* [Estructura de directorios](#estructura-de-directorios)
+* [Instalación](#instalacion)
+* [Configuración](#configuracion)
+  * [Conexión a la base de datos](#conexion-a-la-base-de-datos)
+  * [Tabla ejemplo de la base](#tabla-ejemplo-de-la-base)
+  * [Datos de ejemplo](#datos-de-ejemplo)
+  * [Configuración de los puertos de Docker](#configuracion-de-los-puertos-de-docker)
+* [Ejecutar la app](#ejecutar-la-app)
 
-## **Requerimientos**
+## **Requisitos**
 
 | **Software**                                                 | **Versión**      |
 | ------------------------------------------------------------ | :--------------- |
@@ -122,7 +130,7 @@ Ante de proceder a ejecutar la aplicación es necesario realizar las siguientes 
 
 
 
-### Conexion a la base de datos
+### Conexión a la base de datos
 
 Para establecer los parámetros de conexión a la base de datos es necesario editar el archivo **`.env`** que se encuentra dentro del directorio raíz del proyecto, si este archivo no se encuentra, será necesario crearlo a parti del archivo  **`.env.dis`**.
 
@@ -144,7 +152,7 @@ Habilitar las conexiones remotas para el rango de IP de docker, editando el arch
 
 
 
-### Estructura de la Tabla de ejemplo
+### Tabla ejemplo de la base
 
 En la base de datos crear una tabla con el nombre de **libro** y cuya estructura sea similar a la siguiente: 
 
@@ -192,7 +200,7 @@ En donde:
 
 
 
-## Ejecutar la App
+## Ejecutar la app
 
 En caso de que no se utilice docker omitir esta sección, pero requerirá que se tenga un ambiente configurado con Apache o NGINX junto con todas las librerías que esto requiere.  Para poder ejecutar la aplicación solamente es necesario ejecutar el comando docker-compose dentro del directorio raíz del proyecto como se describe a continuación:
 
