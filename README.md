@@ -39,13 +39,9 @@ La instalación y configuración de la base de datos no es objetivo de esta guí
 
 Antes de poder empezar a utilizar el framework, es necesario tener instalado [docker](https://docs.docker.com/install/) y [docker-compose](https://docs.docker.com/compose/install/) en su última versión. Una vez que se encuentran instalados se requiere descargar la imagen de php 7.1 o superiro, lo cuál se puede realizar a través de dos opciones: a través del repositorio oficial de php en **[dockerhub](https://hub.docker.com/_/php/)** o través del repositorio de la **[imagen preconfigurada](https://github.com/klb-rodriguez/docker)** proporcionada por el MINSAL.
 
-
-
 La desición de uso dependerá del usuario, la ventaja de utilizar la imagen proporcionada por el MINSAL es que esta ya se encuentra configurada con todas las librerías de PHP y Apache necesario para el funcionamiento correcto del Framework.
 
 En el caso que se decida utilizar una imagen diferente a la proporcionada, será necesario que  el usuario preconfigure la imagen antes de usuarla.
-
-
 
 Para utilizar utilizar la imagen proporcinada por el MINSAL es necesario seguir los pasos de compilación que se encuentran disponible en el siguiente enlace: https://github.com/klb-rodriguez/docker
 
@@ -69,7 +65,8 @@ A continuación se muestra la estructura de directorios del poryecto.
 │   │   └── middleware.php
 │   ├── routes
 │   │   └── routes.php
-│   └── dependencies.phprc:
+│   ├── jsonSchemas
+│   └── dependencies.php
 ├── templates
 ├── tests
 ├── vendor
@@ -93,7 +90,8 @@ De la estructura anterior se destacarán los suiguientes archivos y directorios 
 - **src**: Directorio que contiene los archivos fuentes del proyecto.
   - **config**: Almacena los archivos de configuración y conexión a la base de datos.
   - **routes**: Contiene los archivos en el que se declaran las rutas (Endpoint) del Servicio Web.
-- **.env**: Archivo que contiene los datos sensibles de configuración como lo son credenciales a la base de datos, etc., este archivo debe ser creado a partir del **`.env.dist` **, este archivo se omite en el gitignore.
+  - **jsonSchemas**: Contiene los archivos de validación de json.
+- **.env**: Archivo que contiene los datos sensibles de configuración como lo son credenciales a la base de datos, etc., este archivo debe ser creado a partir del  **`.env.dist`**, este archivo se omite en el gitignore.
 - **docker-compose.yml**:  Archivo de configuración de docker-compose que permite modificar los parametros de creación del contenedor de docker.
 
 
@@ -110,18 +108,6 @@ En donde:
 
 - **app**: Es el nombre que se le dará al directorio que se clonará.
 
-Ingresar al directorio del proyecto clonado:
-
-```bash
-cd app
-```
-
-Instalar los vendors utilizando la ultima versión de [composer](https://getcomposer.org/download/):
-
-```bash
-composer install
-```
-
 
 
 ## Configuración
@@ -132,7 +118,7 @@ Ante de proceder a ejecutar la aplicación es necesario realizar las siguientes 
 
 ### Conexión a la base de datos
 
-Para establecer los parámetros de conexión a la base de datos es necesario editar el archivo **`.env`** que se encuentra dentro del directorio raíz del proyecto, si este archivo no se encuentra, será necesario crearlo a parti del archivo  **`.env.dis`**.
+Para establecer los parámetros de conexión a la base de datos es necesario editar el archivo **`.env`** que se encuentra dentro del directorio raíz del proyecto, si este archivo no se encuentra, será necesario crearlo a parti del archivo  **`.env.dist`**.
 
 Reemplazar los parámetros según las configuraciones de la base de datos.
 
@@ -160,7 +146,7 @@ En la base de datos crear una tabla con el nombre de **libro** y cuya estructura
                             Tabla «libro»
       Columna      |            Tipo             | Nullable
 -------------------+-----------------------------+----------
- id                | integer                     | not null
+ id                | serial                      | not null
  isbn              | text                        |
  descripcion       | text                        |
  autor             | text                        |
@@ -206,6 +192,12 @@ En caso de que no se utilice docker omitir esta sección, pero requerirá que se
 
 ```bash
 docker-compose up -d
+```
+
+Instalar los vendors utilizando la ultima versión de [composer](https://getcomposer.org/download/):
+
+```bash
+docker exec -ti app_slim_1 bash -c "composer install"
 ```
 
 Una vez ejecutado el comando anterior ya se puede ingresar al aplicativo para verificar que esté ejecutandose correctamente, para ello es neceario digitar a la url **[http://localhost:90](http://localhost:90)** en donde 90 es el puerto por defecto, si se ha modificado, será necesario colocar dicho puerto.
@@ -284,11 +276,15 @@ $app->get('/v1/libros', function (Request $request, Response $response, array $a
 
 **Ejemplo de consumo**
 
-http://localhost:90/v1/libros?isbn=9780530239033
+```bash
+curl -X GET "http://localhost:90/v1/libros?isbn=9780530239033"
+```
 
 **Resultado:**
 
-```
+**Response**: 200 Ok
+
+```json
 [
 	{
 		"id": 1,
@@ -308,7 +304,7 @@ Endpoint que permite obtener un libro, para este método es requerido proporcion
 
 versión: **v1**
 
-uri: **/libros**
+uri: **/libros/{id}**
 
 dato de respuesta: **JSON**
 
@@ -316,8 +312,228 @@ dato de respuesta: **JSON**
 
 Editar el archivo **routes.php** que se encuentra dentro del directorio `src/routes` y agregar el código que se lista a continuación:
 
+```php
+<?php
+
+// Codigo...
+
+// Endpoint GET que permite obtener un recurso de libro en específico
+// según el id proporcionado
+$app->get('/v1/libros/{id}', function (Request $request, Response $response, array $args) {
+    // obteniendo el identificador del libro
+    $id = $args['id'];
+
+    // inicialización de variables
+    $dato = array();
+    $conn = $this->db->getConnection();
+
+    $sql = "SELECT * FROM libro WHERE id = :id";
+
+    try {
+        $stm = $conn->prepare($sql);
+        $stm->bindValue(':id', $id);
+        $stm->execute();
+        $dato = $stm->fetchAll(PDO::FETCH_ASSOC);
+    } catch(Exception $ex) {
+        return $response->withJson( array("Error al procesar la petición"), 500 );
+    }
+
+    // verificando que exista el libro con el id proporcionado
+    if( count( $dato ) === 0 ) {
+        return $response->withJson( array('Recurso no econtrado'), 404);
+    }
+
+    // retornando el dato correspondiente al libro
+    $dato = $dato[0];
+
+    return $response->withJson( $dato, 200 );
+});
+```
+
+**Ejemplo de consumo**
+
+```bash
+curl -X GET "http://localhost:90/v1/libros/1"
+```
+
+**Resultado:**
+
+**Response**: 200 Ok
+
+```json
+{
+	"id": 1,
+	"isbn": "9780530239033",
+	"descripcion": "Iste modi accusantium autem suscipit quia et et dolorum.",
+	"autor": "Roslyn Morissette",
+	"fecha_publicacion": "2002-09-08 00:00:00"
+}
+```
+
+
+
 ### POST
 
-### PUT/{id}
+Enpoint que permite insertar uno o más libros a la base a través del servicio web.
 
-### DELETE/{id}
+versión: **v1**
+
+uri: **/libros**
+
+datos de entrada: **Array de JSONs**
+
+dato de respuesta: **JSON**
+
+
+
+En el directorio `src/jsonSchemas` crear un archivo llamado **libros.json** el cual debe de contener las restricciones JSON que se han de utilizar para validar los datos entrantes similar al siguiente código:
+
+```json
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Libros",
+    "type": "array",
+    "minItems": 1,
+    "uniqueItems": true,
+    "definitions": {
+        "stringNoBlank": {
+            "type": "string",
+            "minLength": 1
+        },
+        "stringOptional": {
+            "type": ["string", "null"],
+            "minLength": 1
+        },
+        "dateTimeRequired": {
+            "type": "string",
+            "format": "date-time"
+        }
+    },
+    "items": {
+        "required": [ "isbn", "autor", "fechaPublicacion"],
+        "additionalProperties": false,
+        "properties": {
+            "isbn": {
+                "$ref": "#/definitions/stringNoBlank"
+            },
+            "autor": {
+                "$ref": "#/definitions/stringNoBlank"
+            },
+            "descripcion": {
+                "$ref": "#/definitions/stringOptional"
+            },
+            "fechaPublicacion": {
+                "$ref": "#/definitions/dateTimeRequired"
+            }
+        }
+    }
+}
+
+
+```
+
+
+
+Editar el archivo **routes.php** que se encuentra dentro del directorio `src/routes` y agregar el código que se lista a continuación:
+
+```php
+<?php
+
+// codigo...
+use \JsonSchema\Validator AS JsonValidator;
+
+// codigo...
+$app->post('/v1/libros', function (Request $request, Response $response) {
+    $headers = $request->getHeaders();
+
+    // validando los encabezados requeridos
+    if( array_key_exists('HTTP_CONTENT_TYPE', $headers) == false ) {
+        return $response->withJson( array('Error en la petición'), 400);
+    }
+
+    // obteniendo el contenido del cuerpo en formato Array
+    $jsons = $request->getParsedBody();
+
+    // validando que se envie al menos un elemento a insertar
+    if( !$jsons ) {
+        return $response->withJson( array('Entrada invalida documento JSON vacio'), 400);
+    }
+
+    $jsonsRaw = json_encode($jsons);
+    // Obteniendo el JSON SCHEMA
+    $schema = json_decode( file_get_contents( __DIR__.'/../jsonSchemas/libros.json' ) );
+
+    $jsonValidator = new JsonValidator();
+
+    // Validando el json con el schema
+    $jsonValidator->validate( json_decode( $jsonsRaw ), $schema );
+
+    if ( $jsonValidator->isValid() === false ) {
+        return $response->withJson( array( 'error' => 'Entrada invalida, estructura del documento JSON no válido', 'detalle' => $jsonValidator->getErrors() ), 400);
+    }
+
+    // boteniendo la conexion a la base
+    $conn = $this->db->getConnection();
+
+    $sql    = "INSERT INTO libro(isbn, autor, descripcion, fecha_publicacion) VALUES";
+    $values = array();
+    // recorriendo cada json a insertar
+    foreach ( $jsons as $json ) {
+        $isbn             = $json['isbn'];
+        $autor            = $json['autor'];
+        $descripcion      = $json['descripcion'] ? "'".$json['descripcion']."'" : null;
+        $fechaPublicacion = $json['fechaPublicacion'];
+
+        $values[] = "('$isbn', '$autor', $descripcion, '$fechaPublicacion')";
+    }
+
+    $sql .= implode(", ", $values);
+
+    try {
+        $stm = $conn->prepare($sql);
+        $stm->execute();
+        $dato = $stm->fetchAll();
+    } catch(Exception $ex) {
+        return $response->withJson( array("Error al procesar la petición"), 500 );
+    }
+
+    return $response->withJson( array('Recurso de libro creado'), 201);
+});
+
+```
+
+**Ejemplo de consumo**
+
+json a enviar:
+
+```json
+[
+    {
+    	"isbn": "9793695330927",
+   		"descripcion": "Ea et sit enim molestias sunt. Aperiam tenetur rerum aut tempore dolorem. Libero maxime voluptatem quidem.",
+   		"autor": "Miss Priscilla Adams",
+   		"fechaPublicacion": "1993-06-06T00:00:00+00:00"
+    },
+    {
+        "isbn": "9782575801305",
+        "descripcion": "Ab necessitatibus exercitationem nemo et expedita culpa. Mollitia et veniam eaque et recusandae. Qui tenetur aut perspiciatis molestias sed dicta.",
+        "autor": "Mr. Odell Schuster V",
+        "fechaPublicacion": "1990-02-18T00:00:00+00:00"
+    }
+]
+```
+
+Consumo del endpoint:
+
+```bash
+curl -X POST "http://localhost:90/v1/libros" -H "accept: application/json" -H "Content-Type: application/json" -d "[ { \"isbn\": \"9793695330927\", \"descripcion\": \"Ea et sit enim molestias sunt. Aperiam tenetur rerum aut tempore dolorem. Libero maxime voluptatem quidem.\", \"autor\": \"Miss Priscilla Adams\", \"fechaPublicacion\": \"1993-06-06T00:00:00+00:00\"}, { \"isbn\": \"9782575801305\", \"descripcion\": \"Ab necessitatibus exercitationem nemo et expedita culpa. Mollitia et veniam eaque et recusandae. Qui tenetur aut perspiciatis molestias sed dicta.\", \"autor\": \"Mr. Odell Schuster V\", \"fechaPublicacion\": \"1990-02-18T00:00:00+00:00\"} ]"
+```
+
+**Resultado:**
+
+**Response**: 201 Created
+
+```json
+["Recurso de libro creado"]
+```
+
