@@ -20,7 +20,7 @@ Plantilla WebServices -REST que utiliza el [Framework Slim de PHP](https://www.s
 * [Ejecutar la app](#ejecutar-la-app)
 * [Creación Métodos REST](#creación-métodos-rest)
   * [GET](#get)
-  * [GET/{id}](#get/{id})
+  * [GET/{id}](#getid)
   * [POST](#post)
 
 ## **Requisitos**
