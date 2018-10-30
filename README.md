@@ -290,13 +290,13 @@ curl -X GET "http://localhost:90/v1/libros?isbn=9780530239033"
 
 ```json
 [
-	{
-		"id": 1,
-		"isbn": "9780530239033",
-		"descripcion": "Iste modi accusantium autem suscipit quia et et dolorum.",
-		"autor": "Roslyn Morissette",
-		"fecha_publicacion": "2002-09-08 00:00:00"
-	}
+    {
+        "id": 1,
+        "isbn": "9780530239033",
+        "descripcion": "Iste modi accusantium autem suscipit quia et et dolorum.",
+        "autor": "Roslyn Morissette",
+        "fecha_publicacion": "2002-09-08 00:00:00"
+    }
 ]
 ```
 
@@ -366,11 +366,11 @@ curl -X GET "http://localhost:90/v1/libros/1"
 
 ```json
 {
-	"id": 1,
-	"isbn": "9780530239033",
-	"descripcion": "Iste modi accusantium autem suscipit quia et et dolorum.",
-	"autor": "Roslyn Morissette",
-	"fecha_publicacion": "2002-09-08 00:00:00"
+    "id": 1,
+    "isbn": "9780530239033",
+    "descripcion": "Iste modi accusantium autem suscipit quia et et dolorum.",
+    "autor": "Roslyn Morissette",
+    "fecha_publicacion": "2002-09-08 00:00:00"
 }
 ```
 
@@ -513,10 +513,10 @@ json a enviar:
 ```json
 [
     {
-    	"isbn": "9793695330927",
-   		"descripcion": "Ea et sit enim molestias sunt. Aperiam tenetur rerum aut tempore dolorem. Libero maxime voluptatem quidem.",
-   		"autor": "Miss Priscilla Adams",
-   		"fechaPublicacion": "1993-06-06T00:00:00+00:00"
+        "isbn": "9793695330927",
+        "descripcion": "Ea et sit enim molestias sunt. Aperiam tenetur rerum aut tempore dolorem. Libero maxime voluptatem quidem.",
+        "autor": "Miss Priscilla Adams",
+        "fechaPublicacion": "1993-06-06T00:00:00+00:00"
     },
     {
         "isbn": "9782575801305",
