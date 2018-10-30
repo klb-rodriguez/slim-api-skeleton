@@ -18,6 +18,10 @@ Plantilla WebServices -REST que utiliza el [Framework Slim de PHP](https://www.s
   * [Datos de ejemplo](#datos-de-ejemplo)
   * [Configuración de los puertos de Docker](#configuración-de-los-puertos-de-docker)
 * [Ejecutar la app](#ejecutar-la-app)
+* [Creación Métodos REST](#creación-métodos-rest)
+  * [GET](#get)
+  * [GET/{id}](#get/{id})
+  * [POST](#post)
 
 ## **Requisitos**
 
